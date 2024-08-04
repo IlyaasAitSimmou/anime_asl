@@ -60,8 +60,8 @@ character = ''
 # utilities.py
 
 
-# words = ['cat', 'dog', 'cat', 'man', 'van', 'him', 'tan', 'can']
-words = ['oak']
+words = ['cat', 'dog', 'car', 'man', 'van', 'him', 'tan', 'can', 'oak', 'oak', 'oak']
+# words = ['oak']
 word = random.choice(words)
 
 COLOR_ANNOTATOR = sv.ColorAnnotator()
