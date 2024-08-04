@@ -1,4 +1,5 @@
 import pygame
+import random
 from pygame import mixer
 from fighter3 import Fighter, Button, Effect
 import cv2
@@ -10,6 +11,23 @@ from datetime import datetime, timedelta
 
 # utilities.py
 
+# Define the screen size and calculate the webcam size
+screen_width, screen_height = 1000, 600
+webcam_height_ratio = 0.3  # 30% of the Pygame window height
+
+# Assume a standard 16:9 aspect ratio for the webcam
+webcam_width = int(screen_width)
+webcam_height = int(screen_height * webcam_height_ratio)
+
+# Calculate the horizontal position for centering
+screen_center_x = 1366 // 2  # Assuming a standard screen width of 1366 pixels
+webcam_x = screen_center_x - (webcam_width // 2)
+pygame_x = screen_center_x - (screen_width // 2)
+
+# words = ['cat', 'dog', 'cat', 'man', 'van', 'him', 'tan', 'can']
+words = ['oak']
+word = random.choice(words)
+
 COLOR_ANNOTATOR = sv.ColorAnnotator()
 LABEL_ANNOTATOR = sv.LabelAnnotator()
 
@@ -18,6 +36,7 @@ start_time = None
 
 recognized = []
 def on_prediction(res: dict, frame: VideoFrame) -> None:
+    global word
     global recognized
     global start_time, pipeline
     image = frame.image
@@ -47,7 +66,9 @@ def on_prediction(res: dict, frame: VideoFrame) -> None:
         # convert recognized_set into list
         recognized_list = list(recognized_set)
         print(recognized_list)
-        cv2.imshow("frame", annotated_frame)
+        cv2.namedWindow("anime_asl", cv2.WINDOW_NORMAL)
+        cv2.moveWindow("anime_asl", 500, 0)
+        cv2.imshow("anime_asl", annotated_frame)
         pipeline.terminate()
         pipeline.join()
         cv2.destroyAllWindows()
@@ -59,7 +80,7 @@ def on_prediction(res: dict, frame: VideoFrame) -> None:
 
     cv2.rectangle(annotated_frame, start_point, end_point, (0, 0, 255), cv2.FILLED)
 
-    text = "label"
+    text = word
     font = cv2.FONT_HERSHEY_SIMPLEX
     font_scale = 5
     font_color = (255, 255, 255)
@@ -241,7 +262,7 @@ attack2_btn = Button((30, 90, 255), blue, screen_width/2 - 20, 90, screen_width/
 # define function to draw text
 
 def draw_text(text, font, text_color, x, y):
-    img = font.render(text, True, text_color, 10)
+    img = font.render(text, True, text_color)
     screen.blit(img, (x, y))
 
 
@@ -297,7 +318,7 @@ while run:
         # move fighters
         if turn == 1:
             if plyr1_action == '':
-                draw_text("Player 1's Turn. Pick a move!", turn_font, blue, 220, 50)
+                draw_text("Player 1's Turn. Pick a move!", turn_font, blue, 220, 90)
                 action_attack_btn.draw(screen)
                 action_defend_btn.draw(screen)
                 plyr1_action_heal_btn.draw(screen)
@@ -324,17 +345,25 @@ while run:
                 turn = 2
                 plyr1_action = ''
             elif plyr1_action == 'attack':
+                word = random.choice(words)
                 start_pipeline()
-               
+
                 recognized_set = set(recognized)
                 # convert recognized_set into list
                 recognized_list = list(recognized_set)
                 recognized = recognized_list
-                print("RECOGNIZED CHARS: " , recognized)
+                count = sum(1 for char in ''.join(recognized).lower() if char in word)
+                # if not count:
+                #     count = 0
+                # print(count)
+
+                # print("RECOGNIZED CHARS: " , recognized)
 
                 # attack1_btn.draw(screen)
                 # attack2_btn.draw(screen)
-                if 2 > len(recognized) >= 0:
+                if 3 > count >= 1:
+                    print("thing", recognized, count, sum(1 for char in ''.join(recognized).lower() if char in word))
+                # if count == 0:
                     print('len: ' + str(len(recognized)), recognized)
                     Fighter1.move(screen_width, screen_height, Fighter2, 'attack', 1)
                     blood.reset()
@@ -345,7 +374,9 @@ while run:
                     turn = 2
                     plyr1_action = ''
                     recognized = []
-                if len(recognized) >= 2:
+                # if ''.join(recognized).lower() == word:
+                if count == 3:
+                    print("thing", recognized, count, sum(1 for char in ''.join(recognized).lower() if char in word))
                     Fighter1.move(screen_width, screen_height, Fighter2, 'attack', 2)
                     double_animate = 1
                     blood.reset()
@@ -359,10 +390,14 @@ while run:
                     turn = 2
                     plyr1_action = ''
                     recognized = []
+                else:
+                    turn = 2
+                    plyr1_action = ''
+                    recognized = []
                     
         if turn == 2:
             if plyr2_action == '':
-                draw_text("Player 2's Turn. Pick a move!", turn_font, blue, 220, 50)
+                draw_text("Player 2's Turn. Pick a move!", turn_font, blue, 220, 90)
                 action_attack_btn.draw(screen)
                 action_defend_btn.draw(screen)
                 plyr2_action_heal_btn.draw(screen)
@@ -391,6 +426,7 @@ while run:
                 turn = 1
                 plyr2_action = ''
             elif plyr2_action == 'attack':
+                word = random.choice(words)
                 start_pipeline()
 
                 recognized_set = set(recognized)
@@ -398,12 +434,15 @@ while run:
                 recognized_list = list(recognized_set)
                 recognized = recognized_list
                 print("RECOGNIZED CHARS: " , recognized)
-
+                count = sum(1 for char in ''.join(recognized).lower() if char in word)
+                
                 # attack1_btn.draw(screen)
                 # attack2_btn.draw(screen)
-                if 2 > len(recognized) >= 0:
+                if 3 >= count >= 1:
+                # if count == 0:
+                    print("thing", recognized, 'count: ' + str(count), 'sum:' + str(sum(1 for char in ''.join(recognized).lower() if char in word)))
                     Fighter2.move(screen_width, screen_height, Fighter1, 'attack', 1)
-                    print('len: ' + str(len(recognized)), recognized)
+                    print('len: ' + str(len(recognized)).lower(), recognized)
                     blood.reset()
                     blood.animate = True
                     blood_x = Fighter1.rect.x
@@ -412,7 +451,9 @@ while run:
                     turn = 1
                     plyr2_action = ''
                     recognized = []
-                if len(recognized) >= 2:
+                # if ''.join(recognized).lower() == word:
+                if count == 3:
+                    print("thing", recognized, count, sum(1 for char in ''.join(recognized).lower() if char in word))
                     Fighter2.move(screen_width, screen_height, Fighter1, 'attack', 2)
                     double_animate = 1
                     blood.reset()
@@ -425,6 +466,10 @@ while run:
 
                     turn = 1
                     plyr2_action = ''
+                    recognized = []
+                else:
+                    turn = 1
+                    plyr1_action = ''
                     recognized = []
                 # if attack1_btn.clicked:
                 #     print('trueee')
