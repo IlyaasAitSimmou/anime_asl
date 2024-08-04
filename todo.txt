@@ -1,0 +1,6 @@
+- display random 3 letter words on camera frame
+- position window elsewhere
+- game reset button
+- extra sound effects
+
+- arduino stuff 
