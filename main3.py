@@ -144,6 +144,7 @@ red = (255, 0, 0)
 yellow = (255, 255, 0)
 white = (255, 255, 255)
 blue = (0, 0, 255)
+black = (0, 0, 0)
 
 # define game variables
 
@@ -252,9 +253,9 @@ turn_font = pygame.font.Font("assets/fonts/turok.ttf", 50)
 
 
 action_defend_btn = Button((255, 90, 0), red, screen_width/3 - 20, 90, 0, 490, 'defend', 20, yellow, 10, "assets/fonts/turok.ttf")
-plyr1_action_heal_btn = Button((255, 90, 0), red, screen_width/3 - 20, 90, screen_width/3, 490, f'heal ({plyr1_potions} left)', 20, yellow, 10, "assets/fonts/turok.ttf")
-plyr2_action_heal_btn = Button((255, 90, 0), red, screen_width/3 - 20, 90, screen_width/3, 490, f'heal ({plyr2_potions} left)', 20, yellow, 10, "assets/fonts/turok.ttf")
-action_attack_btn = Button((255, 90, 0), red, screen_width/3 - 20, 90, 2*screen_width/3, 490, 'attack', 20, yellow, 10, "assets/fonts/turok.ttf")
+plyr1_action_heal_btn = Button((255, 90, 0), red, screen_width/3 - 20, 90, screen_width/3, 490, f'heal ({plyr1_potions} left)', 20, white, 10, "assets/fonts/turok.ttf")
+plyr2_action_heal_btn = Button((255, 90, 0), blue, screen_width/3 - 20, 90, screen_width/3, 490, f'heal ({plyr2_potions} left)', 20, yellow, 10, "assets/fonts/turok.ttf")
+action_attack_btn = Button((255, 90, 0), black, screen_width/3 - 20, 90, 2*screen_width/3, 490, 'attack', 20, white, 10, "assets/fonts/turok.ttf")
 
 attack1_btn = Button((30, 90, 255), blue, screen_width/2 - 20, 90, 0, 490, 'attack 1', 20, yellow, 10, "assets/fonts/turok.ttf")
 attack2_btn = Button((30, 90, 255), blue, screen_width/2 - 20, 90, screen_width/2, 490, 'attack 2', 20, yellow, 10, "assets/fonts/turok.ttf")
@@ -374,8 +375,7 @@ while run:
                     turn = 2
                     plyr1_action = ''
                     recognized = []
-                # if ''.join(recognized).lower() == word:
-                if count == 3:
+                if ''.join(recognized).lower() == word:
                     print("thing", recognized, count, sum(1 for char in ''.join(recognized).lower() if char in word))
                     Fighter1.move(screen_width, screen_height, Fighter2, 'attack', 2)
                     double_animate = 1
@@ -451,8 +451,8 @@ while run:
                     turn = 1
                     plyr2_action = ''
                     recognized = []
-                # if ''.join(recognized).lower() == word:
-                if count == 3:
+                if ''.join(recognized).lower() == word:
+                # if count == 3:
                     print("thing", recognized, count, sum(1 for char in ''.join(recognized).lower() if char in word))
                     Fighter2.move(screen_width, screen_height, Fighter1, 'attack', 2)
                     double_animate = 1
