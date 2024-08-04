@@ -1,0 +1,196 @@
+% Define your Airtable API credentials
+personalAccessToken = 'patpw8SmEpRnSk9Wc.3a46a423dce308b0f3419693a096038435e83e9a9a4dafb900cc74f4c8c25e98'; % Replace with your actual PAT
+baseId = 'app5eD0etpFEv7MEK'; % Your base ID
+tableId = 'tblRCAJmwzEEqhQaw'; % Your table ID
+
+% Construct the URL for the API request
+url = ['https://api.airtable.com/v0/', baseId, '/', tableId];
+
+% Set up the options for the web request
+options = weboptions('HeaderFields', {'Authorization', ['Bearer ', personalAccessToken]}, 'Timeout', 60);
+
+% Initialize cell arrays to store data
+players = {};
+characters = {};
+responseTimes = {};
+results = {};
+
+% Make the initial API request
+try
+    response = webread(url, options);
+    
+    % Process the records
+    if isfield(response, 'records')
+        records = response.records;
+        
+        % Process initial set of records
+        for i = 1:length(records)
+            % Check if the necessary fields exist
+            if isfield(records(i).fields, 'player') && ...
+               isfield(records(i).fields, 'character') && ...
+               isfield(records(i).fields, 'response_time') && ...
+               isfield(records(i).fields, 'result')
+               
+                % Extract fields
+                player = records(i).fields.player; 
+                character = records(i).fields.character; 
+                responseTime = records(i).fields.response_time;
+                result = records(i).fields.result;
+                
+                % Convert response_time to numeric if it's a string
+                if ischar(responseTime) || isstring(responseTime)
+                    responseTime = str2double(responseTime);
+                end
+                
+                % Check if responseTime is numeric after conversion
+                if isnumeric(responseTime) && ~isnan(responseTime)
+                    % Append the player, character, response time, and result to the cell arrays
+                    players{end+1} = player; %#ok<SAGROW>
+                    characters{end+1} = character; %#ok<SAGROW>
+                    responseTimes{end+1} = responseTime; %#ok<SAGROW>
+                    results{end+1} = result; %#ok<SAGROW>
+                end
+            end
+        end
+        
+        % Check for pagination
+        while isfield(response, 'offset')
+            nextUrl = [url, '?offset=', response.offset];
+            response = webread(nextUrl, options);
+            records = response.records;
+            
+            % Process the paginated records
+            for i = 1:length(records)
+                % Check if the necessary fields exist
+                if isfield(records(i).fields, 'player') && ...
+                   isfield(records(i).fields, 'character') && ...
+                   isfield(records(i).fields, 'response_time') && ...
+                   isfield(records(i).fields, 'result')
+                   
+                    % Extract fields
+                    player = records(i).fields.player; 
+                    character = records(i).fields.character; 
+                    responseTime = records(i).fields.response_time;
+                    result = records(i).fields.result;
+                    
+                    % Convert response_time to numeric if it's a string
+                    if ischar(responseTime) || isstring(responseTime)
+                        responseTime = str2double(responseTime);
+                    end
+                    
+                    % Check if responseTime is numeric after conversion
+                    if isnumeric(responseTime) && ~isnan(responseTime)
+                        % Append the player, character, response time, and result to the cell arrays
+                        players{end+1} = player; %#ok<SAGROW>
+                        characters{end+1} = character; %#ok<SAGROW>
+                        responseTimes{end+1} = responseTime; %#ok<SAGROW>
+                        results{end+1} = result; %#ok<SAGROW>
+                    end
+                end
+            end
+        end
+        
+        % Convert cell arrays to arrays
+        players = string(players);
+        characters = string(characters);
+        responseTimes = cell2mat(responseTimes);
+        results = string(results);
+        
+        % Get unique players and characters
+        uniquePlayers = unique(players);
+        uniqueCharacters = unique(characters);
+        
+        % Initialize a matrix to store frequencies
+        freqMatrix = zeros(length(uniquePlayers), length(uniqueCharacters));
+        
+        for i = 1:length(players)
+            playerIdx = find(strcmp(uniquePlayers, players(i)));
+            characterIdx = find(strcmp(uniqueCharacters, characters(i)));
+            freqMatrix(playerIdx, characterIdx) = freqMatrix(playerIdx, characterIdx) + 1;
+        end
+        
+        % Plot the character frequencies and response times
+        figure; % Create a new figure for bar and scatter plots
+
+        % Plot the character frequencies
+        subplot(2, 1, 1); % Create a subplot for the first graph
+        bar(freqMatrix', 'stacked');
+
+        % Customize the plot
+        set(gca, 'XTickLabel', uniqueCharacters); % Set the x-axis labels to the unique characters
+        xlabel('Characters');
+        ylabel('Frequency');
+        title('Frequency of Characters Used by Players');
+        grid on; % Add grid lines
+
+        % Add buffer space at the top of the graph
+        ylim([0, max(sum(freqMatrix, 1)) + 5]); % Adjust y-axis limits
+
+        % Add text showing total characters
+        totalCharacters = sum(freqMatrix, 'all');
+        text(1, max(sum(freqMatrix, 1)) + 2, ['Total Characters: ', num2str(totalCharacters)], 'FontSize', 10);
+
+        % Optionally, rotate the x-axis labels for better readability
+        xtickangle(45);
+
+        % Set colors: blue for Player 1 and red for Player 2
+        colormap([0 0 1; 1 0 0]); % Blue for first player, red for second player
+
+        % Add legend
+        legend(uniquePlayers, 'Location', 'best');
+
+        % Save the character frequencies plot as a PNG file
+        saveas(gcf, 'character_frequencies.png');
+
+        % Plot the response times as a scatter plot
+        subplot(2, 1, 2); % Create a subplot for the second graph
+        scatter(1:length(responseTimes), responseTimes, 'filled');
+        hold on;
+
+        % Add a trendline
+        p = polyfit(1:length(responseTimes), responseTimes, 1);
+        yfit = polyval(p, 1:length(responseTimes));
+        plot(1:length(responseTimes), yfit, '-r', 'LineWidth', 2);
+
+        % Customize the plot
+        xlabel('Record Index');
+        ylabel('Response Time');
+        title('Response Time Scatter Plot with Trendline');
+        grid on; % Add grid lines
+
+        % Save the response time plot as a PNG file
+        saveas(gcf, 'response_times.png');
+
+        % Create pie charts for each player's correct and wrong results
+        figure; % Create a new figure for pie charts
+        numPlayers = length(uniquePlayers);
+        for i = 1:numPlayers
+            playerIdx = strcmp(players, uniquePlayers(i));
+            playerResults = results(playerIdx);
+            correctCount = sum(strcmp(playerResults, 'correct'));
+            wrongCount = sum(strcmp(playerResults, 'wrong'));
+            
+            % Create the pie chart with specified colors
+            subplot(1, numPlayers, i);
+            h = pie([correctCount, wrongCount], {'Correct', 'Wrong'});
+            
+            % Set the colors: blue for correct, red for wrong
+            h(1).FaceColor = [0.4660 0.6740 0.1880]; % Green for correct
+            h(3).FaceColor = [0.6350 0.0780 0.1840]; % Red for wrong
+            
+            % Set the title
+            title(['Results for Player ', uniquePlayers(i)]);
+        end
+        
+        % Save the pie charts as a PNG file
+        saveas(gcf, 'player_results_pie_charts.png');
+        
+    else
+        disp('No records found.');
+    end
+catch ME
+    fprintf('Error: %s\n', ME.message);
+    if isfield(ME, 'response')
+        fprintf('Response: %s\n', char(ME.response.Body.Data));
+    end
+end

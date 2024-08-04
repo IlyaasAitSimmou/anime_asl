@@ -22,7 +22,7 @@ class Fighter():
         self.attack_cooldown = 0
         self.attack_sound = sound
         shield_fx = pygame.mixer.Sound(f'assets/audio/shield_fx/shield{randint(1, 5)}.wav')
-        shield_fx.set_volume(6)
+        shield_fx.set_volume(20)
         self.shield_sound = shield_fx
         self.defending = False
         self.hit = False
@@ -134,6 +134,8 @@ class Fighter():
                 self.attack_type = 1
             if attack == 2:
                 self.attack_type = 2
+            if attack == 3:
+                self.attack_type = 3
             self.attack(target, self.attack_type)
     # handle animation updates
     def update(self):
@@ -200,10 +202,18 @@ class Fighter():
         self.attack_sound.play()
         if not target.defending:
             if attack_type == 1:
-                target.health -= 20
+                target.health -= 10
             elif attack_type == 2:
+                target.health -= 20
+            elif attack_type == 3:
                 target.health -= 40
         else:
+            if attack_type == 1:
+                target.health -= 1
+            elif attack_type == 2:
+                target.health -= 2
+            elif attack_type == 3:
+                target.health -= 4
             self.shield_sound.play()
         target.hit = True
         target.defending = False
@@ -223,16 +233,35 @@ class Button():
     def __init__(self, border_color, main_color, width, height, x, y, text, font_size, text_color, border_width, font):
         self.color = main_color
         self.main_body = pygame.Rect((x + border_width, y, width, height))
+        self.main_hover = pygame.Rect((x - 1.2*border_width, y - 1.2*border_width, 1.2*width, 1.2*height))
         self.border_color = border_color
         self.border = pygame.Rect((x, y - border_width, width + 2*border_width, height + 2*border_width))
+        self.border_hover = pygame.Rect((x - 2.4*border_width, y - 2.4*border_width, 1.2*(width + 2*border_width), 1.2*(height + 2*border_width)))
         self.font = pygame.font.Font(font, font_size)
         self.text = self.font.render(text, True, text_color)
-        self.text_pos = (x + (width/2), y + (height/2))
+        self.x_adjust = self.text.get_width()
+        self.y_adjust = self.text.get_height()
+        self.hover_text = self.font.render(text, True, self.darken_color(text_color, 0.75))
+        self.x_hover_adjust = self.hover_text.get_width()
+        self.y_hover_adjust = self.hover_text.get_height()
+        self.text_pos = (x + (width/2) - self.x_adjust/2, y + (height/2) - self.y_adjust/2)
+        self.text_hover_pos = (x + (1.2*width/2) - self.x_hover_adjust/2, y + (1.2*height/2) - self.y_hover_adjust/2)
 
     def draw(self, surface):
         pygame.draw.rect(surface, self.border_color, self.border)
         pygame.draw.rect(surface, self.color, self.main_body)
         surface.blit(self.text, self.text_pos)
+
+    def darken_color(self, color, factor):
+        factor = max(0, min(1, factor))
+        r, g, b = color
+        darkened_color = (int(r * factor), int(g * factor), int(b * factor))
+        return darkened_color
+
+    def hover(self, surface):
+        pygame.draw.rect(surface, self.darken_color(self.border_color, 0.75), self.border_hover)
+        pygame.draw.rect(surface, self.darken_color(self.color, 0.75), self.main_hover)
+        surface.blit(self.hover_text, self.text_hover_pos)
 
 class Effect():
     def __init__(self, animation_list, animation_cooldown):
